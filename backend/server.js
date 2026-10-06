@@ -1,3 +1,4 @@
+// Import the packages
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
@@ -15,7 +16,7 @@ const db = mysql.createConnection({
   dateStrings: true, // keeps dates as plain text like 2026-10-04
 });
 
-// ---------- FOLDERS ----------
+// FOLDERS
 
 // get all folders
 app.get("/folders", (req, res) => {
@@ -94,4 +95,4 @@ app.delete("/tasks/:id", (req, res) => {
   });
 });
 
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+app.listen(3000, () => console.log("Server running on http://localhost:3000")); // Start listening for HTTP requests on port 3000.

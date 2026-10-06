@@ -1,9 +1,9 @@
 const API = "http://localhost:3000";
 let folders = [];
 let tasks = [];
-let openForm = null;
+let openForm = null; // openForm → remembers which inline form is currently open
 
-// Helpers
+// Helpers  This function converts dangerous HTML characters into safe text.
 function esc(s) {
   return String(s)
     .replace(/&/g, "&amp;")
@@ -11,13 +11,13 @@ function esc(s) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
-
+// Loading data from the backend
 async function load() {
   folders = await (await fetch(API + "/folders")).json();
   tasks = await (await fetch(API + "/tasks")).json();
   render();
 }
-
+// The reusable send() function
 async function send(url, method, body) {
   await fetch(API + url, {
     method,
@@ -42,6 +42,8 @@ function closeForm() {
   openForm = null;
   render();
 }
+
+// Enter and Escape keyboard support
 function onEnter(e, action) {
   if (e.key === "Enter") action();
   if (e.key === "Escape") closeForm();
@@ -55,6 +57,8 @@ function addFolder() {
   send("/folders", "POST", { name });
   input.value = "";
 }
+
+// Adding a subfolder
 function saveSubFolder(parentId) {
   const name = document.getElementById("inline-input").value.trim();
   if (name) send("/folders", "POST", { name, parent_id: parentId });
@@ -68,12 +72,14 @@ function deleteFolder(id) {
     send("/folders/" + id, "DELETE");
 }
 
-// Tasks
+// adding Tasks
 function saveTask(folderId) {
   const title = document.getElementById("inline-input").value.trim();
   const task_date = document.getElementById("inline-date").value;
   if (title) send("/tasks", "POST", { folder_id: folderId, title, task_date });
 }
+
+// it switches a task between Active and Done,
 function toggleTask(id) {
   send("/tasks/" + id + "/toggle", "PUT");
 }
@@ -81,14 +87,14 @@ function deleteTask(id) {
   send("/tasks/" + id, "DELETE");
 }
 
-//  Render
+//  Render This function builds the actual HTML shown on the page.
 function renderFolder(folder) {
   const subs = folders.filter((f) => f.parent_id === folder.id);
   const myTasks = tasks.filter((t) => t.folder_id === folder.id);
   const done = myTasks.filter((t) => t.is_done).length;
   const isOpen = openForm && openForm.id === folder.id;
 
-  // folder name: normal text, or an input while renaming
+  // This is where your rename functionality becomes interesting.
   const nameHtml =
     isOpen && openForm.kind === "rename"
       ? `<input id="inline-input" class="inline" value="${esc(folder.name)}"
@@ -102,7 +108,7 @@ function renderFolder(folder) {
   if (isOpen && openForm.kind === "sub") {
     formHtml = `
       <div class="inline-form">
-        <input id="inline-input" class="inline" placeholder="Subfolder name..."
+        <input id="inline-input" class="inline" placeholder="Type subfolder name..."
           onkeydown="onEnter(event, () => saveSubFolder(${folder.id}))" />
         <button onclick="saveSubFolder(${folder.id})">Add</button>
         <button onclick="closeForm()">Cancel</button>
@@ -111,7 +117,7 @@ function renderFolder(folder) {
   if (isOpen && openForm.kind === "task") {
     formHtml = `
       <div class="inline-form">
-        <input id="inline-input" class="inline" placeholder="Task title..."
+        <input id="inline-input" class="inline" placeholder="What to do...."
           onkeydown="onEnter(event, () => saveTask(${folder.id}))" />
         <input id="inline-date" type="date" class="inline date" />
         <button onclick="saveTask(${folder.id})">Add</button>
@@ -119,6 +125,7 @@ function renderFolder(folder) {
       </div>`;
   }
 
+  // Rendering tasks
   return `
     <div class="folder">
       <div class="folder-head">
@@ -149,6 +156,7 @@ function renderFolder(folder) {
     </div>`;
 }
 
+// put the generated html into id app html file
 function render() {
   const roots = folders.filter((f) => f.parent_id === null);
   document.getElementById("app").innerHTML = roots.map(renderFolder).join("");
@@ -161,4 +169,4 @@ document.getElementById("folderName").addEventListener("keydown", (e) => {
   if (e.key === "Enter") addFolder();
 });
 
-load();
+load(); // This starts the application.
